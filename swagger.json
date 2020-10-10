@@ -72,9 +72,7 @@
             "required": true,
             "type": "string",
             "enum": [
-              "lts",
-              "ga",
-              "ea",
+              "15",
               "14",
               "13",
               "12",
@@ -164,9 +162,7 @@
             "required": true,
             "type": "string",
             "enum": [
-              "lts",
-              "ga",
-              "ea",
+              "15",
               "14",
               "13",
               "12",

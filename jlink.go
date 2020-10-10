@@ -38,6 +38,12 @@ var (
 
 	// Whether Maven Central integration is enabled
 	MAVEN_CENTRAL = false
+
+	// The platform for local runtimes
+	LOCAL_PLATFORM = "linux"
+
+	// The architecture for local runtimes
+	LOCAL_ARCH = "x64"
 )
 
 // A client for downloading artifacts and release metadata from api.adoptopenjdk.net
@@ -256,29 +262,27 @@ func handleRequest(context *gin.Context, platform, arch, version, endian, implem
 	// Lookup the target runtime whose modules will be packaged into a new runtime image
 	target, err := lookupRelease(arch, platform, implementation, version)
 	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"success": false, "reason": "Failed to find runtime"})
-		log.Println(err)
+		context.JSON(http.StatusBadRequest, gin.H{"success": false, "reason": "Failed to find target runtime"})
 		return
 	}
 
 	// Lookup a runtime containing a compatible version of jlink for local use
-	local, err := lookupLatestRelease("x64", "linux", implementation, majorVersion)
+	local, err := lookupRelease(LOCAL_ARCH, LOCAL_PLATFORM, implementation, version)
 	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"success": false, "reason": "Failed to find runtime"})
-		log.Println(err)
+		context.JSON(http.StatusBadRequest, gin.H{"success": false, "reason": "Failed to find local runtime"})
 		return
 	}
 
 	// Download the local runtime
-	localRuntimePath, err := downloadRelease(local)
+	localRuntimePath, err := downloadRelease(local, version)
 	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"success": false, "reason": "Failed to download runtime"})
+		context.JSON(http.StatusBadRequest, gin.H{"success": false, "reason": "Failed to download local runtime"})
 		log.Println(err)
 		return
 	}
 
 	// Download the target runtime
-	targetRuntimePath, err := downloadRelease(target)
+	targetRuntimePath, err := downloadRelease(target, version)
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"success": false, "reason": "Failed to download target runtime"})
 		log.Println(err)

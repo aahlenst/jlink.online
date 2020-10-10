@@ -19,7 +19,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 
@@ -50,8 +49,17 @@ type adoptiumPackage struct {
 // partial downloads.
 var downloadLock sync.Mutex
 
-// LookupRelease finds a release for the given attributes.
+// A local cache for runtime information which never changes
+var metadataCache map[string]*adoptiumBinary = make(map[string]*adoptiumBinary)
+
+// LookupRelease finds release metadata for the given attributes.
 func lookupRelease(arch, platform, implementation, version string) (*adoptiumBinary, error) {
+
+	// Check cache first
+	cacheKey := arch + "_" + platform + "_" + implementation + "_" + version
+	if binary := metadataCache[cacheKey]; binary != nil {
+		return binary, nil
+	}
 
 	url := fmt.Sprintf("https://api.adoptopenjdk.net/v3/assets/version/%s?jvm_impl=%s&os=%s&architecture=%s", version, implementation, platform, arch)
 	log.Println("GET:", url)
@@ -67,32 +75,9 @@ func lookupRelease(arch, platform, implementation, version string) (*adoptiumBin
 	}
 
 	if len(releases) > 0 && len(releases[0].Binaries) > 0 {
-		return &releases[0].Binaries[0], nil
-	}
-
-	return nil, errors.New("No release found")
-}
-
-// LookupLatestRelease finds the latest release for the given attributes.
-func lookupLatestRelease(arch, platform, implementation string, majorVersion int) (*adoptiumBinary, error) {
-
-	url := fmt.Sprintf("https://api.adoptopenjdk.net/v3/assets/latest/%d/%s", majorVersion, implementation)
-	log.Println("GET:", url)
-	res, err := adoptium.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	var releases []adoptiumRelease
-	if err := json.NewDecoder(res.Body).Decode(&releases); err != nil {
-		return nil, err
-	}
-
-	for _, release := range releases {
-		if release.Binary.Platform == platform && release.Binary.Architecture == arch {
-			return &release.Binary, nil
-		}
+		// Update cache
+		metadataCache[cacheKey] = &releases[0].Binaries[0]
+		return metadataCache[cacheKey], nil
 	}
 
 	return nil, errors.New("No release found")
@@ -100,7 +85,7 @@ func lookupLatestRelease(arch, platform, implementation string, majorVersion int
 
 // DownloadRelease downloads a runtime image to the cache directory and returns
 // the path to the extracted runtime directory.
-func downloadRelease(binary *adoptiumBinary) (string, error) {
+func downloadRelease(binary *adoptiumBinary, version string) (string, error) {
 	downloadLock.Lock()
 	defer downloadLock.Unlock()
 
@@ -108,12 +93,7 @@ func downloadRelease(binary *adoptiumBinary) (string, error) {
 
 	// Check if the runtime is cached first
 	if _, e := os.Stat(runtimePath); !os.IsNotExist(e) {
-		contents, _ := filepath.Glob(runtimePath + "/*")
-		if len(contents) == 1 {
-			return contents[0], nil
-		} else {
-			return "", errors.New("Unexpected runtime contents")
-		}
+		return runtimePath + "/jdk-" + version, nil
 	}
 
 	archivePath, dir := newTemporaryFile(binary.Package.Name)
@@ -145,10 +125,5 @@ func downloadRelease(binary *adoptiumBinary) (string, error) {
 		return "", err
 	}
 
-	contents, _ := filepath.Glob(runtimePath + "/*")
-	if len(contents) == 1 {
-		return contents[0], nil
-	} else {
-		return "", errors.New("Unexpected runtime contents")
-	}
+	return runtimePath + "/jdk-" + version, nil
 }
