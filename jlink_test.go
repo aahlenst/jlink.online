@@ -70,25 +70,25 @@ func assertRequestFailure(t *testing.T, req string, expectedCode int) {
 
 func TestJlink(t *testing.T) {
 	os.Setenv("PORT", "8080")
-	os.Setenv("CACHE", "/tmp/cache")
+	os.Setenv("RT_CACHE", "/tmp/cache")
 	go main()
 
 	// Allow the server some time to start
 	time.Sleep(4 * time.Second)
 
-	assertRequestSuccess(t, "http://localhost:8080/x64/linux/13?modules=java.base", ".tar.gz")
-	assertRequestSuccess(t, "http://localhost:8080/x64/windows/13?modules=java.base", ".zip")
-	assertRequestSuccess(t, "http://localhost:8080/x64/mac/13?modules=java.base", ".tar.gz")
+	assertRequestSuccess(t, "http://localhost:8080/x64/linux/11.0.8+10?modules=java.base", ".tar.gz")
+	assertRequestSuccess(t, "http://localhost:8080/x64/windows/11.0.8+10?modules=java.base", ".zip")
+	assertRequestSuccess(t, "http://localhost:8080/x64/mac/11.0.8+10?modules=java.base", ".tar.gz")
 
 	// Invalid architecture
-	assertRequestFailure(t, "http://localhost:8080/a/windows/13", 400)
+	assertRequestFailure(t, "http://localhost:8080/a/windows/11.0.8+10", 400)
 	// Invalid OS
-	assertRequestFailure(t, "http://localhost:8080/x64/a/13", 400)
+	assertRequestFailure(t, "http://localhost:8080/x64/a/11.0.8+10", 400)
 	// Invalid version
 	assertRequestFailure(t, "http://localhost:8080/x64/windows/1a3", 400)
 	// Nonexistent version
 	assertRequestFailure(t, "http://localhost:8080/x64/windows/99", 400)
 	// Invalid module
-	assertRequestFailure(t, "http://localhost:8080/x64/windows/13?modules=123", 400)
-	assertRequestFailure(t, "http://localhost:8080/x64/windows/13?modules=&", 400)
+	assertRequestFailure(t, "http://localhost:8080/x64/windows/11.0.8+10?modules=123", 400)
+	assertRequestFailure(t, "http://localhost:8080/x64/windows/11.0.8+10?modules=&", 400)
 }

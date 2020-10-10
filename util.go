@@ -12,12 +12,7 @@
 package main
 
 import (
-	"bytes"
-	"errors"
-	"io"
-	"log"
 	"math/rand"
-	"net/http"
 	"os"
 	"regexp"
 	"strconv"
@@ -56,52 +51,13 @@ func compareJdkRelease(version1, version2 string) int {
 	return 0
 }
 
-func download(client *http.Client, source, dest string) error {
-	log.Println("Downloading:", source)
-
-	res, err := client.Get(source)
-	if err != nil {
-		return err
-	}
-	if res.StatusCode != http.StatusOK {
-		return errors.New("Status Code: " + res.Status)
-	}
-	defer res.Body.Close()
-
-	out, err := os.Create(dest)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	_, err = io.Copy(out, res.Body)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func downloadBytes(client *http.Client, source string) ([]byte, error) {
-	log.Println("Downloading:", source)
-
-	res, err := client.Get(source)
-	if err != nil {
-		return nil, err
-	}
-	if res.StatusCode != http.StatusOK {
-		return nil, errors.New("Status Code: " + res.Status)
-	}
-	defer res.Body.Close()
-
-	b := new(bytes.Buffer)
-	b.ReadFrom(res.Body)
-	return b.Bytes(), nil
-}
-
 // GetMajorVersion returns the major version field from a Java version string.
 func getMajorVersion(version string) (int, error) {
 	if i := strings.Index(version, "."); i != -1 {
+		version = version[:i]
+	}
+
+	if i := strings.Index(version, "+"); i != -1 {
 		version = version[:i]
 	}
 
