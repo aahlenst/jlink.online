@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -64,10 +65,10 @@ func assertRequestSuccess(t *testing.T, req, platform string) {
 	for _, f := range files {
 		switch platform {
 		case "windows":
-			_, err := os.Stat(output + "/" + f.Name() + "/bin/java.exe")
+			_, err := os.Stat(filepath.FromSlash(output + "/" + f.Name() + "/bin/java.exe"))
 			assert.NoError(t, err)
 		default:
-			_, err := os.Stat(output + "/" + f.Name() + "/bin/java")
+			_, err := os.Stat(filepath.FromSlash(output + "/" + f.Name() + "/bin/java"))
 			assert.NoError(t, err)
 		}
 	}
@@ -78,10 +79,10 @@ func assertRequestSuccess(t *testing.T, req, platform string) {
 		for _, f := range files {
 			switch platform {
 			case "windows":
-				cmd := exec.Command(output+"/"+f.Name()+"/bin/java.exe", "--version")
+				cmd := exec.Command(filepath.FromSlash(output+"/"+f.Name()+"/bin/java.exe"), "--version")
 				assert.NoError(t, cmd.Run())
 			default:
-				cmd := exec.Command(output+"/"+f.Name()+"/bin/java", "--version")
+				cmd := exec.Command(filepath.FromSlash(output+"/"+f.Name()+"/bin/java"), "--version")
 				assert.NoError(t, cmd.Run())
 			}
 		}
@@ -97,7 +98,6 @@ func assertRequestFailure(t *testing.T, req string, expectedCode int) {
 
 func TestJlink(t *testing.T) {
 	os.Setenv("PORT", "8080")
-	os.Setenv("RT_CACHE", "/tmp/cache")
 	go main()
 
 	// Allow the server some time to start

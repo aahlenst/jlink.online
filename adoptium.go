@@ -19,6 +19,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -89,11 +90,11 @@ func downloadRelease(binary *adoptiumBinary, version string) (string, error) {
 	downloadLock.Lock()
 	defer downloadLock.Unlock()
 
-	runtimePath := RT_CACHE + "/" + strings.TrimSuffix(strings.TrimSuffix(binary.Package.Name, ".zip"), ".tar.gz")
+	runtimePath := RT_CACHE + string(os.PathSeparator) + strings.TrimSuffix(strings.TrimSuffix(binary.Package.Name, ".zip"), ".tar.gz")
 
 	// Check if the runtime is cached first
 	if _, e := os.Stat(runtimePath); !os.IsNotExist(e) {
-		return runtimePath + "/jdk-" + version, nil
+		return filepath.FromSlash(runtimePath + "/jdk-" + version), nil
 	}
 
 	archivePath, dir := newTemporaryFile(binary.Package.Name)
@@ -126,5 +127,5 @@ func downloadRelease(binary *adoptiumBinary, version string) (string, error) {
 		return "", err
 	}
 
-	return runtimePath + "/jdk-" + version, nil
+	return filepath.FromSlash(runtimePath + "/jdk-" + version), nil
 }

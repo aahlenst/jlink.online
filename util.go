@@ -46,14 +46,14 @@ func parseModuleInfo(file string) []string {
 
 // NewTemporaryFile returns a new temporary file and its parent directory.
 func newTemporaryFile(filename string) (string, string) {
-	dir := TMP + "/" + strconv.Itoa(rand.Int())
+	dir := TMP + string(os.PathSeparator) + strconv.Itoa(rand.Int())
 	_ = os.MkdirAll(dir, os.ModePerm)
-	return dir + "/" + filename, dir
+	return dir + string(os.PathSeparator) + filename, dir
 }
 
 // NewTemporaryDirectory returns a new temporary directory and its parent directory.
 func newTemporaryDirectory(dirname string) (string, string) {
-	dir := TMP + "/" + strconv.Itoa(rand.Int())
+	dir := TMP + string(os.PathSeparator) + strconv.Itoa(rand.Int())
 	_ = os.MkdirAll(dir+"/"+dirname, os.ModePerm)
-	return dir + "/" + dirname, dir
+	return dir + string(os.PathSeparator) + dirname, dir
 }

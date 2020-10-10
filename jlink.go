@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -31,10 +32,10 @@ var (
 	PORT = "80"
 
 	// A cache directory for base runtimes
-	RT_CACHE = "/runtime_cache"
+	RT_CACHE = filepath.FromSlash(os.TempDir() + "/runtime_cache")
 
 	// A directory for short-lived files
-	TMP = "/tmp"
+	TMP = os.TempDir()
 
 	// Whether Maven Central integration is enabled
 	MAVEN_CENTRAL = false
@@ -340,19 +341,21 @@ func jlink(jdk, mavenCentral, runtime, endian, version, platform, filename strin
 	// Build module path according to target platform
 	switch platform {
 	case "mac":
-		modulePath = runtime + "/Contents/Home/jmods:" + mavenCentral
+		modulePath = filepath.FromSlash(runtime + "/Contents/Home/jmods" + string(os.PathListSeparator) + mavenCentral)
+	case "windows":
+		modulePath = filepath.FromSlash(runtime + "/jmods" + string(os.PathListSeparator) + mavenCentral)
 	default:
-		modulePath = runtime + "/jmods:" + mavenCentral
+		modulePath = filepath.FromSlash(runtime + "/jmods" + string(os.PathListSeparator) + mavenCentral)
 	}
 
 	// Build jlink command according to local platform
 	switch LOCAL_PLATFORM {
 	case "mac":
-		jlink = jdk + "/Contents/Home/bin/jlink"
+		jlink = filepath.FromSlash(jdk + "/Contents/Home/bin/jlink")
 	case "windows":
-		jlink = jdk + "/bin/jlink.exe"
+		jlink = filepath.FromSlash(jdk + "/bin/jlink.exe")
 	default:
-		jlink = jdk + "/bin/jlink"
+		jlink = filepath.FromSlash(jdk + "/bin/jlink")
 	}
 
 	if err := os.Chmod(jlink, os.ModePerm); err != nil {
