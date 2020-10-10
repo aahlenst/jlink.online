@@ -332,23 +332,34 @@ func handleRequest(context *gin.Context, platform, arch, version, endian, implem
 // for the given set of modules.
 func jlink(jdk, mavenCentral, runtime, endian, version, platform, filename string, modules []string) (*bytes.Buffer, error) {
 
-	if err := os.Chmod(jdk+"/bin/jlink", os.ModePerm); err != nil {
-		return nil, err
-	}
+	var modulePath, jlink string
 
 	output, dir := newTemporaryFile("jdk-" + version)
 	defer os.RemoveAll(dir)
 
 	// Build module path according to target platform
-	var modulePath string
-	if platform == "mac" {
+	switch platform {
+	case "mac":
 		modulePath = runtime + "/Contents/Home/jmods:" + mavenCentral
-	} else {
+	default:
 		modulePath = runtime + "/jmods:" + mavenCentral
 	}
 
-	// Build jlink command
-	cmd := exec.Command(jdk+"/bin/jlink", "--compress=0", "--no-header-files", "--no-man-pages", "--endian", endian, "--module-path", modulePath, "--add-modules", strings.Join(modules, ","), "--output", output)
+	// Build jlink command according to local platform
+	switch LOCAL_PLATFORM {
+	case "mac":
+		jlink = jdk + "/Contents/Home/bin/jlink"
+	case "windows":
+		jlink = jdk + "/bin/jlink.exe"
+	default:
+		jlink = jdk + "/bin/jlink"
+	}
+
+	if err := os.Chmod(jlink, os.ModePerm); err != nil {
+		return nil, err
+	}
+
+	cmd := exec.Command(jlink, "--compress=0", "--no-header-files", "--no-man-pages", "--endian", endian, "--module-path", modulePath, "--add-modules", strings.Join(modules, ","), "--output", output)
 	log.Println("JLINK:", cmd.Args)
 	if err := cmd.Run(); err != nil {
 		return nil, err
