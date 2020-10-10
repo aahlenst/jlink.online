@@ -96,6 +96,14 @@ func main() {
 			log.Fatal("Invalid value for MAVEN_CENTRAL flag")
 		}
 	}
+	if platform, exists := os.LookupEnv("TRAVIS_OS_NAME"); exists {
+		switch platform {
+		case "osx":
+			LOCAL_PLATFORM = "mac"
+		default:
+			LOCAL_PLATFORM = platform
+		}
+	}
 	if platform, exists := os.LookupEnv("LOCAL_PLATFORM"); exists {
 		LOCAL_PLATFORM = platform
 	}

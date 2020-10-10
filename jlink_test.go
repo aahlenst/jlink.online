@@ -73,13 +73,7 @@ func assertRequestSuccess(t *testing.T, req, platform string) {
 	}
 
 	// Execute "java --version" according to the test platform
-	platform_tests := false
-	if travis_platform, exists := os.LookupEnv("TRAVIS_OS_NAME"); exists {
-		platform_tests = travis_platform == platform
-	} else {
-		platform_tests = LOCAL_PLATFORM == platform
-	}
-	if platform_tests {
+	if LOCAL_PLATFORM == platform {
 		log.Println("Executing 'java --version' on local platform")
 		for _, f := range files {
 			switch platform {
