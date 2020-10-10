@@ -96,6 +96,9 @@ func main() {
 			log.Fatal("Invalid value for MAVEN_CENTRAL flag")
 		}
 	}
+	if platform, exists := os.LookupEnv("LOCAL_PLATFORM"); exists {
+		LOCAL_PLATFORM = platform
+	}
 	if cache, exists := os.LookupEnv("RT_CACHE"); exists {
 		RT_CACHE = cache
 	}
@@ -301,7 +304,7 @@ func handleRequest(context *gin.Context, platform, arch, version, endian, implem
 	}
 
 	// Run jlink on the target runtime
-	archive, err := jlink(localRuntimePath, mavenCentral, targetRuntimePath, endian, version, target.Package.Name, modules)
+	archive, err := jlink(localRuntimePath, mavenCentral, targetRuntimePath, endian, version, platform, target.Package.Name, modules)
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"success": false, "reason": "Failed to generate runtime"})
 		log.Println(err)
@@ -316,7 +319,7 @@ func handleRequest(context *gin.Context, platform, arch, version, endian, implem
 
 // Jlink uses a standard JDK runtime to generate a custom runtime image
 // for the given set of modules.
-func jlink(jdk, mavenCentral, runtime, endian, version, filename string, modules []string) (*bytes.Buffer, error) {
+func jlink(jdk, mavenCentral, runtime, endian, version, platform, filename string, modules []string) (*bytes.Buffer, error) {
 
 	if err := os.Chmod(jdk+"/bin/jlink", os.ModePerm); err != nil {
 		return nil, err
@@ -325,8 +328,17 @@ func jlink(jdk, mavenCentral, runtime, endian, version, filename string, modules
 	output, dir := newTemporaryFile("jdk-" + version)
 	defer os.RemoveAll(dir)
 
-	cmd := exec.Command(jdk+"/bin/jlink", "--compress=0", "--no-header-files", "--no-man-pages", "--endian", endian, "--module-path", runtime+"/jmods:"+mavenCentral, "--add-modules", strings.Join(modules, ","), "--output", output)
-	log.Println(cmd.Args)
+	// Build module path according to target platform
+	var modulePath string
+	if platform == "mac" {
+		modulePath = runtime+"/Contents/Home/jmods:"+mavenCentral
+	} else {
+		modulePath = runtime+"/jmods:"+mavenCentral
+	}
+
+	// Build jlink command
+	cmd := exec.Command(jdk+"/bin/jlink", "--compress=0", "--no-header-files", "--no-man-pages", "--endian", endian, "--module-path", modulePath, "--add-modules", strings.Join(modules, ","), "--output", output)
+	log.Println("JLINK:", cmd.Args)
 	if err := cmd.Run(); err != nil {
 		return nil, err
 	}

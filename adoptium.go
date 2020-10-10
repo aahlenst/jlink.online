@@ -62,7 +62,7 @@ func lookupRelease(arch, platform, implementation, version string) (*adoptiumBin
 	}
 
 	url := fmt.Sprintf("https://api.adoptopenjdk.net/v3/assets/version/%s?jvm_impl=%s&os=%s&architecture=%s", version, implementation, platform, arch)
-	log.Println("GET:", url)
+	log.Println("METADATA QUERY:", url)
 	res, err := adoptium.Get(url)
 	if err != nil {
 		return nil, err
@@ -100,6 +100,7 @@ func downloadRelease(binary *adoptiumBinary, version string) (string, error) {
 	defer os.RemoveAll(dir)
 
 	// Download the runtime
+	log.Println("RUNTIME QUERY:", binary.Package.Link)
 	response, err := adoptium.Get(binary.Package.Link)
 	if err != nil {
 		return "", err
