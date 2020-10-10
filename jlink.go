@@ -99,6 +99,9 @@ func main() {
 	if platform, exists := os.LookupEnv("LOCAL_PLATFORM"); exists {
 		LOCAL_PLATFORM = platform
 	}
+	if arch, exists := os.LookupEnv("LOCAL_ARCH"); exists {
+		LOCAL_ARCH = arch
+	}
 	if cache, exists := os.LookupEnv("RT_CACHE"); exists {
 		RT_CACHE = cache
 	}
@@ -331,9 +334,9 @@ func jlink(jdk, mavenCentral, runtime, endian, version, platform, filename strin
 	// Build module path according to target platform
 	var modulePath string
 	if platform == "mac" {
-		modulePath = runtime+"/Contents/Home/jmods:"+mavenCentral
+		modulePath = runtime + "/Contents/Home/jmods:" + mavenCentral
 	} else {
-		modulePath = runtime+"/jmods:"+mavenCentral
+		modulePath = runtime + "/jmods:" + mavenCentral
 	}
 
 	// Build jlink command

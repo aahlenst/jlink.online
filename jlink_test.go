@@ -14,9 +14,9 @@ package main
 import (
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
-	"log"
 	"os/exec"
 	"testing"
 	"time"
@@ -73,15 +73,21 @@ func assertRequestSuccess(t *testing.T, req, platform string) {
 	}
 
 	// Execute "java --version" according to the test platform
-	if LOCAL_PLATFORM == platform {
+	platform_tests := false
+	if travis_platform, exists := os.LookupEnv("TRAVIS_OS_NAME"); exists {
+		platform_tests = travis_platform == platform
+	} else {
+		platform_tests = LOCAL_PLATFORM == platform
+	}
+	if platform_tests {
 		log.Println("Executing 'java --version' on local platform")
 		for _, f := range files {
 			switch platform {
 			case "windows":
-				cmd := exec.Command(output + "/" + f.Name() + "/bin/java.exe", "--version")
+				cmd := exec.Command(output+"/"+f.Name()+"/bin/java.exe", "--version")
 				assert.NoError(t, cmd.Run())
 			default:
-				cmd := exec.Command(output + "/" + f.Name() + "/bin/java", "--version")
+				cmd := exec.Command(output+"/"+f.Name()+"/bin/java", "--version")
 				assert.NoError(t, cmd.Run())
 			}
 		}
