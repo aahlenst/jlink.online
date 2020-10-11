@@ -106,6 +106,7 @@ func TestJlink(t *testing.T) {
 	assertRequestSuccess(t, "http://localhost:8080/x64/linux/11.0.8+10?modules=java.base", "linux")
 	assertRequestSuccess(t, "http://localhost:8080/x64/windows/11.0.8+10?modules=java.base", "windows")
 	assertRequestSuccess(t, "http://localhost:8080/x64/mac/11.0.8+10?modules=java.base", "mac")
+	assertRequestSuccess(t, "http://localhost:8080/ppc64/aix/11.0.8+10?modules=java.base", "aix")
 
 	// Invalid architecture
 	assertRequestFailure(t, "http://localhost:8080/a/windows/11.0.8+10", 400)
