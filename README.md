@@ -3,7 +3,7 @@
 :boom: This project is currently experimental and subject to change at any time. :boom:
 
 ## Introduction
-This project is a wrapper for Java's `jlink` utility that makes it faster and easier to build custom Java runtimes for an application. Just send it a HTTP request and **jlink.online** fetches the appropriate JDK [from AdoptOpenJDK](https://github.com/AdoptOpenJDK), runs `jlink` to produce a custom runtime containing your dependencies, then returns that compressed runtime in the response.
+This project is a wrapper for Java's `jlink` utility that makes it faster and easier to build custom Java runtimes for an application. Just send it a HTTP request and **jlink.online** fetches the appropriate JDK [from AdoptOpenJDK](https://github.com/AdoptOpenJDK), runs `jlink` to produce a custom runtime image containing your dependencies, then returns that compressed runtime in the response.
 
 Using an optimized runtime is a good idea when deploying to a production environment or when bundling a platform-specific runtime to distribute with your application. For many applications, a `jlink`'d runtime will be significantly smaller in size.
 
@@ -51,7 +51,7 @@ curl --data-binary @com.github.example/src/main/java/module-info.java \
   --output app_runtime.tar.gz
 ```
 
-The `artifacts` parameter is a comma-separated list of the Maven Central coordinates of your dependencies. This is required to know what versions to include in your runtime. In the future, we may be able to get this information from a `build.gradle` or `pom.xml`.
+The `artifacts` parameter is a comma-separated list of the Maven Central coordinates of your dependencies. This is required to know what versions to include in your runtime. In the future, we may be able to get this information from a `build.gradle` or `pom.xml` which would be much more convenient.
 
 **Unfortunately this can't work for dependencies that are automatic modules (because automatic modules don't specify *their* dependencies).**
 
