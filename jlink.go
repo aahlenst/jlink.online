@@ -236,10 +236,6 @@ func handleRequest(context *gin.Context, platform, arch, version, endian, implem
 			return
 		}
 	}
-	if len(modules) < 1 {
-		context.JSON(http.StatusBadRequest, gin.H{"success": false, "reason": "At least one module is required"})
-		return
-	}
 
 	// Validate endian type
 	if endian == "" {
@@ -335,6 +331,18 @@ func jlink(jdk, mavenCentral, runtime, endian, version, platform, filename strin
 
 	var modulePath, jlink string
 
+	// Add the base module if it's not there
+	base := false
+	for _, m := range modules {
+		if m == "java.base" {
+			base = true
+			break
+		}
+	}
+	if !base {
+		modules = append(modules, "java.base")
+	}
+
 	output, dir := newTemporaryFile("jdk-" + version)
 	defer os.RemoveAll(dir)
 
@@ -362,7 +370,24 @@ func jlink(jdk, mavenCentral, runtime, endian, version, platform, filename strin
 		return nil, err
 	}
 
-	cmd := exec.Command(jlink, "--compress=0", "--no-header-files", "--no-man-pages", "--endian", endian, "--module-path", modulePath, "--add-modules", strings.Join(modules, ","), "--output", output)
+	cmd := exec.Command(jlink,
+		// Share string constants
+		"--compress=1",
+		// Exclude headers
+		"--no-header-files",
+		// Exclude man pages
+		"--no-man-pages",
+		// Remove debug information
+		"--strip-debug",
+		// The target endian-ness
+		"--endian", endian,
+		// The path where modules can be found
+		"--module-path", modulePath,
+		// The selected modules
+		"--add-modules", strings.Join(modules, ","),
+		// The output directory
+		"--output", output)
+
 	log.Println("JLINK:", cmd.Args)
 	if err := cmd.Run(); err != nil {
 		return nil, err
@@ -370,6 +395,9 @@ func jlink(jdk, mavenCentral, runtime, endian, version, platform, filename strin
 
 	archive, dir := newTemporaryFile(filename)
 	defer os.RemoveAll(dir)
+
+	// TODO: archiver can't handle symlinks in this directory
+	_ = os.RemoveAll(filepath.FromSlash(output + "/legal"))
 
 	if err := archiver.Archive([]string{output}, archive); err != nil {
 		return nil, err

@@ -12,6 +12,8 @@ COPY . .
 RUN go build -o main .
 
 ENV GIN_MODE=release
+ENV RT_CACHE=/app/runtimes
+ENV TMP=/app/tmp
 
 EXPOSE 80
 

@@ -1,35 +1,19 @@
-**jlink.online** is a HTTP microservice that builds minimized Java runtimes on the fly.
+**jlink.online** is a HTTP microservice that builds optimized/minimized Java runtimes on the fly.
 
-## Motivation
-As of Java 9, the JDK now includes a tool called `jlink` that can build optimized runtimes for modular Java applications. Using an optimized runtime is a good idea when deploying to a production environment (due to space savings and a reduced attack surface\*) or when bundling a platform-specific runtime to distribute with your application.
+## Introduction
+As of Java 9, the JDK now includes a tool called `jlink` that can build optimized runtimes for modular Java applications. Using an optimized runtime is a good idea when deploying to a production environment or when bundling a platform-specific runtime to distribute with your application.
 
-This project is basically a wrapper for Java's `jlink` utility that makes it faster and easier to build custom Java runtimes. Just send it a request containing the names of the modules you need and **jlink.online** will automatically fetch the appropriate JDK, run `jlink` to produce a minimal runtime, then return that compressed runtime in the response body.
+This project is a wrapper for Java's `jlink` utility that makes it faster and easier to build custom Java runtimes. Just send it a request containing the names of the modules you need and **jlink.online** will automatically fetch the appropriate JDK, run `jlink` to produce a minimal runtime, then return that compressed runtime in the response body.
 
-\* <sup>Reduced attack surface might be wishful thinking</sup>
 ## Usage Examples
-#### Download the latest Java 13 release for Linux x64 (containing `java.base` only)
+#### Download Java 11 for Linux x64 (containing `java.base` only)
 ```
-https://jlink.online/x64/linux/13
-```
-
-#### Download the latest Java 13.0.1 release for Linux x64 (containing `java.desktop` and `jdk.zipfs`)
-```
-https://jlink.online/x64/linux/13.0.1?modules=java.desktop,jdk.zipfs
+https://jlink.online/x64/linux/11.0.8+10
 ```
 
-#### Download the latest Java LTS release for Windows x64 (also works with `ea` and `ga`)
+#### Download Java 11 for Linux x64 (containing `java.desktop` and `jdk.zipfs`)
 ```
-https://jlink.online/x64/windows/lts
-```
-
-#### Download the latest Java GA release (OpenJ9 JVM implementation)
-```
-https://jlink.online/x64/linux/ga?implementation=openj9
-```
-
-#### Download the latest Java 12 release for Linux S390X (big endian)
-```
-https://jlink.online/s390x/linux/12?endian=big
+https://jlink.online/x64/linux/11.0.8+10?modules=java.desktop,jdk.zipfs
 ```
 
 #### Download a runtime in a Dockerfile
@@ -42,8 +26,8 @@ RUN apk add curl
 
 # Install custom runtime
 RUN curl -G 'https://jlink.online/x64/linux/lts' \
-  -d modules=java.base \
-  | tar zxf -
+    -d modules=java.base \
+    | tar zxf -
 
 # Install application
 # ...
@@ -53,7 +37,7 @@ RUN curl -G 'https://jlink.online/x64/linux/lts' \
 Suppose your application has the following module definition:
 ```java
 module com.github.example {
-	requires org.slf4j;
+    requires org.slf4j;
 }
 ```
 
